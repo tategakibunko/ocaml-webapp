@@ -233,7 +233,7 @@ let output_json
 let send_mail
     ?(from_addr=("no title", "noreply@nohost"))
     ?(subject="no title")
-    ?(mailer="postfix")
+    ?(mailer="sendmail.postfix")
     ~to_addrs (** (title, mail) list *)
     message =
   Netsendmail.sendmail ~mailer @@

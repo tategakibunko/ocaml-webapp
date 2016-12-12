@@ -200,9 +200,8 @@ let get_cookie_value (cgi:cgi) name =
 	| value -> Some value)
     | None -> None
 
-let create_cookie ?(domain=None) ?(expire=None) ?(path=None) (cgi:cgi) name value =
-  (** let cookie = Cookie.make name value ~secure:true in *)
-  let cookie = Cookie.make name value in
+let create_cookie ?(is_secure=false) ?(domain=None) ?(expire=None) ?(path=None) (cgi:cgi) name value =
+  let cookie = Cookie.make name value ~secure:is_secure in
   Cookie.set_max_age cookie expire;
   Cookie.set_path cookie path;
   (** disabled for IE problem *)

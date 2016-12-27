@@ -204,6 +204,9 @@ let create_cookie ?(is_secure=false) ?(domain=None) ?(expire=None) ?(path=None) 
   let cookie = Cookie.make name value ~secure:is_secure in
   Cookie.set_max_age cookie expire;
   Cookie.set_path cookie path;
+  if is_secure then
+    Cookie.set_secure cookie true
+  ;
   (** disabled for IE problem *)
   (* Cookie.set_domain cookie domain; *)
   cookie

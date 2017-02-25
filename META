@@ -1,5 +1,5 @@
-description = "tiny webapp library"
-version = "0.9.5"
+description = "webapp library"
+version = "0.9.6"
 archive(byte) = "webApp.cma"
 archive(native) = "webApp.cmxa"
 requires = ""

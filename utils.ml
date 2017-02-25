@@ -109,8 +109,13 @@ let get_raw_sha1 str =
   Cryptokit.hash_string (Cryptokit.Hash.sha1()) str
 
 let get_hex_sha1 str =
-  Cryptokit.transform_string (Cryptokit.Hexa.encode()) @@
-    Cryptokit.hash_string (Cryptokit.Hash.sha1()) str
+  Cryptokit.transform_string (Cryptokit.Hexa.encode()) (get_raw_sha1 str)
+
+let get_raw_sha256 str =
+  Cryptokit.hash_string (Cryptokit.Hash.sha256()) str
+
+let get_hex_sha256 str =
+  Cryptokit.transform_string (Cryptokit.Hexa.encode()) (get_raw_sha256 str)
 
 let get_base64 str =
   let trans = Cryptokit.Base64.encode_compact () in

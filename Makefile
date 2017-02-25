@@ -7,7 +7,7 @@ PKGS:=unix,threads,pcre,netstring,netcgi2,calendar,json-wheel,uutf,cryptokit
 CAMLC:=ocamlfind ocamlc -thread
 OPT:=ocamlfind ocamlopt -g -thread
 
-VERSION:=0.9.2
+VERSION:=0.9.6
 NAME:=webapp
 LIBNAME:=webApp
 PACKNAME:=WebApp

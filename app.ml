@@ -54,12 +54,17 @@ let get_sock_addr ~port ~sockfile =
       (port, Unix.ADDR_INET(Unix.inet_addr_loopback, port_no))
     | _ -> failwith "invalid socket addr"
 
-let run_fcgi ?(port=None) sockaddr fn =
+let run_fcgi ?(port=None) ?(content_types: string list = [
+  "multipart/form-data";
+  "application/x-www-form-urlencoded";
+  "application/json";
+]) sockaddr fn =
   debug_out @@ spf "run fcgi...";
   let buffered _ ch = new Netchannels.buffered_trans_channel ch in
   let output_type = `Transactional buffered in
   let config = {Netcgi.default_config with
-    permitted_http_methods = [`HEAD; `GET; `POST; `DELETE; `PUT]
+    permitted_http_methods = [`HEAD; `GET; `POST; `DELETE; `PUT];
+    permitted_input_content_types = content_types;
   } in
   match port with
     | Some port -> Netcgi_fcgi.run ~config ~output_type ~sockaddr ~port fn

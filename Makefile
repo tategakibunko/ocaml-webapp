@@ -3,7 +3,8 @@ SRCS:=	utils.ml \
 #	oauth2.ml\
 
 #PKGS:=unix,threads,pcre,netstring,ssl,netclient,netcgi2,equeue-ssl,batteries,calendar,json-wheel,cryptokit
-PKGS:=unix,threads,pcre,netstring,netcgi2,calendar,json-wheel,uutf,cryptokit
+#PKGS:=unix,threads,pcre,netstring,netcgi2,calendar,json-wheel,uutf,cryptokit
+PKGS:=unix,threads,pcre,netstring,netcgi2,calendar,json-wheel,uutf
 CAMLC:=ocamlfind ocamlc -thread
 OPT:=ocamlfind ocamlopt -g -thread
 

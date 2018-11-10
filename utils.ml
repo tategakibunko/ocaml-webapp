@@ -105,6 +105,13 @@ let get_raw_md5 str =
 let get_hex_md5 str =
   Digest.to_hex @@ Digest.string str
 
+let urlsafe_base64_char = function
+  | '=' -> 'x'
+  | '/' -> 'Y'
+  | '+' -> 'z'
+  | c -> c
+
+(* cryptokit link problem....
 let get_raw_sha1 str =
   Cryptokit.hash_string (Cryptokit.Hash.sha1()) str
 
@@ -121,12 +128,6 @@ let get_base64 str =
   let trans = Cryptokit.Base64.encode_compact () in
   Cryptokit.transform_string trans str
 
-let urlsafe_base64_char = function
-  | '=' -> 'x'
-  | '/' -> 'Y'
-  | '+' -> 'z'
-  | c -> c
-
 let get_base64_short_hash ?(len=20) str =
   let sha1 = get_raw_sha1 str in
   let base64 = get_base64 sha1 in
@@ -142,6 +143,19 @@ let get_short_hash ?(len=20) str =
   let len' = min len (String.length sha1) in
   String.sub sha1 0 len'
 
+let gen_random_salt () =
+  let random_float = gen_random_float () in
+  let random_int = gen_random_int () in
+  get_hex_sha1 @@ spf "%f-random-salt-%d" random_float random_int
+
+let gen_random_hash ?(len=20) salt =
+  get_base64_short_hash ~len @@ spf "%s-%d" salt (gen_random_int())
+
+*)
+
+(** currently cryptokit broken, so it's workaround *)
+let get_hex_sha1 = get_hex_md5
+
 let gen_random_int () =
   Random.int 100000
 
@@ -153,10 +167,17 @@ let gen_random_salt () =
   let random_int = gen_random_int () in
   get_hex_sha1 @@ spf "%f-random-salt-%d" random_float random_int
 
-let gen_random_hash ?(len=20) salt =
-  get_base64_short_hash ~len @@ spf "%s-%d" salt (gen_random_int())
 
+let get_short_hash ?(len=20) str =
+  let md5 = get_hex_md5 str in
+  let len' = min len (String.length md5) in
+  String.sub md5 0 len'
+
+
+(*
 let stretch_hash ?(hash_fun=get_hex_sha1) ~count hash =
+*)
+let stretch_hash ?(hash_fun=get_hex_md5) ~count hash =
   let rec repeat i str =
     if i >= count then str
     else repeat (i+1) (hash_fun str) in

@@ -271,5 +271,6 @@ let send_mail
     ~subject:subject
     ~to_addrs:to_addrs
     message in
-  header#set_fields [("X-Mailer", "mailer")];
-  Netsendmail.sendmail ~mailer (header, body)
+  let header' = new Netmime.basic_mime_header header#fields in
+  header'#update_field "X-Mailer" "mailer";
+  Netsendmail.sendmail ~mailer (header', body)

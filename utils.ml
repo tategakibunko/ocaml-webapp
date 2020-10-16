@@ -242,7 +242,7 @@ let set_cookie (cgi:cgi) cookies =
 
 let get_suffix filename =
   match List.rev @@ Pcre.split ~rex:(Pcre.regexp "\\.") filename with
-    | ext :: rest -> String.lowercase ext
+    | ext :: rest -> String.lowercase_ascii ext
     | _ -> ""
 
 (** output json to stdout with proper content-type *)
@@ -264,11 +264,12 @@ let send_mail
     ?(mailer="sendmail.postfix")
     ~to_addrs (** (title, mail) list *)
     message =
-  Netsendmail.sendmail ~mailer @@
-    Netsendmail.compose
+  let (header, body) = Netsendmail.compose
     ~in_charset:`Enc_utf8
     ~out_charset:`Enc_utf8
     ~from_addr:from_addr
     ~subject:subject
     ~to_addrs:to_addrs
-    message
+    message in
+  header#update_field "X-Mailer" "mailer";
+  Netsendmail.sendmail ~mailer (header, body)

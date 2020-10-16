@@ -264,13 +264,10 @@ let send_mail
     ?(mailer="sendmail.postfix")
     ~to_addrs (** (title, mail) list *)
     message =
-  let (header, body) = Netsendmail.compose
+  Netsendmail.sendmail ~mailer @@ Netsendmail.compose
     ~in_charset:`Enc_utf8
     ~out_charset:`Enc_utf8
     ~from_addr:from_addr
     ~subject:subject
     ~to_addrs:to_addrs
-    message in
-  let header' = new Netmime.basic_mime_header header#fields in
-  header'#update_field "X-Mailer" "mailer";
-  Netsendmail.sendmail ~mailer (header', body)
+    message

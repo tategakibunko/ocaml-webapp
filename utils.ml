@@ -271,5 +271,5 @@ let send_mail
     ~subject:subject
     ~to_addrs:to_addrs
     message in
-  header#update_field "X-Mailer" "mailer";
+  header#set_fields [("X-Mailer", "mailer")];
   Netsendmail.sendmail ~mailer (header, body)

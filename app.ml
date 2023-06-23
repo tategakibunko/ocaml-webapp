@@ -26,14 +26,11 @@ let settings : webapp_settings = {
 let debug_out str =
   if settings.debug then print_endline str else ()
 
-let attach_pid_file ~pidfile ~daemon_pid =
-  match pidfile with
-    | None -> ()
-    | Some filename ->
-      debug_out @@ spf "attach pid(%d) as file[%s]" daemon_pid filename;
-      let pidfile = open_out_gen [Open_creat; Open_trunc; Open_wronly] 0o644 filename in
-      output_string pidfile @@ string_of_int daemon_pid;
-      close_out pidfile
+let attach_pid_file ~file_path ~daemon_pid =
+  debug_out @@ spf "attach pid(%d) as file[%s]" daemon_pid file_path;
+  let ch = open_out_gen [Open_creat; Open_trunc; Open_wronly] 0o644 file_path in
+  output_string ch @@ string_of_int daemon_pid;
+  close_out ch
 
 let start_with_daemon fn =
   debug_out @@ spf "start daemon...";
@@ -44,13 +41,16 @@ let start_with_daemon fn =
       debug_out @@ spf "pid = %d" daemon_pid;
       fn daemon_pid
 
-let get_sock_addr ~port ~sockfile =
-  match port, sockfile with
-    | _, Some filename ->
+let get_sock_addr ?(addr=None) ~port ~sockfile =
+  match addr, port, sockfile with
+    | _, _, Some filename ->
       debug_out @@ spf "get unix socket(file = %s)" filename;
       (None, Unix.ADDR_UNIX filename)
-    | Some port_no, None ->
-      debug_out @@ spf "get sock addr(port = %d)" port_no;
+    | Some(addr), Some port_no, None ->
+      debug_out @@ spf "get sock addr(addr = %s, port = %d)" addr port_no;
+      (port, Unix.ADDR_INET(Unix.inet_addr_of_string addr, port_no))
+    | None, Some port_no, None ->
+      debug_out @@ spf "get sock addr(addr = 127.0.0.1, port = %d)" port_no;
       (port, Unix.ADDR_INET(Unix.inet_addr_loopback, port_no))
     | _ -> failwith "invalid socket addr"
 
@@ -75,6 +75,7 @@ let start_session_server
     ?(pidfile=None)
     ?(sockfile=None)
     ?(log_root=None)
+    ?(addr=None)
     ~port
     ~on_error
     ~session_loader
@@ -85,15 +86,22 @@ let start_session_server
   settings.log_root <- log_root;
   debug_out "start session server";
 
-  (** start fcgi daemon *)
-  start_with_daemon (fun daemon_pid ->
-    let (port, sockaddr) = get_sock_addr ~port ~sockfile in
-    attach_pid_file ~pidfile ~daemon_pid;
-    run_fcgi ~port sockaddr (fun cgi ->
-      let _ = cgi#set_header ~cache:`No_cache ~content_type:"text/html; charset=utf-8" () in
-      let path_args = get_path_args (cgi:>cgi) in
-      let session = session_loader (cgi:>cgi) in
-      (try path_router (cgi:>cgi) session path_args with exn -> on_error (cgi:>cgi) session exn);
-      cgi#out_channel#commit_work();
-      cgi#finalize()
-    ))
+  let (port, sockaddr) = get_sock_addr ~addr ~port ~sockfile in
+  let fcgi_main (cgi : Netcgi_fcgi.cgi) =
+    let _ = cgi#set_header ~cache:`No_cache ~content_type:"text/html; charset=utf-8" () in
+    let path_args = get_path_args (cgi:>cgi) in
+    let session = session_loader (cgi:>cgi) in
+    (try path_router (cgi:>cgi) session path_args with exn -> on_error (cgi:>cgi) session exn);
+    cgi#out_channel#commit_work();
+    cgi#finalize() in
+
+  match pidfile with
+  (* if pidfile is defined, start daemon with pidfile *)
+  | Some(file_path) -> 
+    start_with_daemon (fun daemon_pid ->
+      attach_pid_file ~file_path ~daemon_pid;
+      run_fcgi ~port sockaddr fcgi_main
+    )
+  (* if pidfile is not defined, just start fcgi  *)
+  | None ->
+    run_fcgi ~port sockaddr fcgi_main
